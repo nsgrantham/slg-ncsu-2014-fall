@@ -24,19 +24,17 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 
 ## Schedule of talks
 
-
-
 |Talk|Date|Topic|Presenter(s)|
-|--|----|-----|---------|
-||09/05/14|Introduction|Neal Grantham & Justin Post|
+|----|----|-----|------------|
+| |09/05/14|Introduction|Neal Grantham & Justin Post|
 |01|09/19/14|Regularization & Penalization|Brian Gaines|
 |02|09/26/14|Penalization Methods|Joshua Day|
 |03|10/03/14|Adaptive & Generalized Lasso|Will Burton|
-||10/10/14|_Fall Break_
+| |10/10/14|_Fall Break_
 |04|10/17/14|Classification|Neal Grantham|
 |05|10/24/14|Bayesian Classification|Suchit Mehrotra|
 |06|10/31/14|Decision Trees|Munir Winkel|
 |07|11/07/14|Support Vector Machines|Jami Jackson|
 |08|11/14/14|Ranking via SVNs|Brian Naughton|
 |09|11/21/14|Discriminant Analysis|Huimen Peng|
-|||_Done for the semester_||
+| | |_Done for the semester_||
