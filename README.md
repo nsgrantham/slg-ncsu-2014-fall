@@ -25,7 +25,8 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 ## Schedule of talks
 
 
-|# |Date|Topic|Presenter(s)|
+
+|Talk|Date|Topic|Presenter(s)|
 |--|----|-----|---------|
 ||09/05/14|Introduction|Neal Grantham & Justin Post|
 |01|09/19/14|Regularization & Penalization|Brian Gaines|
@@ -39,5 +40,3 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 |08|11/14/14|Ranking via SVNs|Brian Naughton|
 |09|11/21/14|Discriminant Analysis|Huimen Peng|
 |||_Done for the semester_||
-
-[^1]: 
