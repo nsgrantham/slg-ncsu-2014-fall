@@ -20,9 +20,10 @@ SLG is a reading group at North Carolina State University organized by [Dr. Just
 	
 ## Introduction
 
-Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/index) and see Justin's overview of statistical learning slides[^1] (Overview.pdf).
+Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/index) and see `Overview.pdf`, Justin's slides on an introduction to statistical learning slides (Sadly, Justin's talk is not available online because the video camera battery died halfway through, but we've learned our lesson!).
 
 ## Schedule of talks
+
 
 |# |Date|Topic|Presenter(s)|
 |--|----|-----|---------|
@@ -39,4 +40,4 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 |09|11/21/14|Discriminant Analysis|Huimen Peng|
 |||_Done for the semester_||
 
-[^1]: Sadly, Justin's talk is not available online because the video camera battery died halfway through, but we've learned our lesson!
+[^1]: 
