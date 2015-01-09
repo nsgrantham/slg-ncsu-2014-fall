@@ -1,0 +1,386 @@
+---
+title: "Ranking Methods"
+subtitle: "An application of Support Vector Machines"
+author: "Brian Naughton"
+date: "November 14, 2014"
+output: ioslides_presentation
+---
+## Outline
+
+1. Motivation
+2. Ranking Methods
+3. SVM
+4. Application to ranking NCAA football teams
+
+# Motivation | Why should we care about ranking?
+
+## Why care about about ranking?
+<img src="pictures.png" height="500px" width="700px" />
+
+# Ranking Methods
+
+## Ranking Methods
+
+### Problem setup 
+  - We have $n$ items/objects we are interested in ranking
+  - $\pmb{y}=(y_1, \dots, y_n)$ is a vector of ranks; a permutation of the of the numbers $\{1,2,\dots,n\}$
+    - i.e. $y_i=j$, means that object $i$ is ranked in the $j$-th place.
+  - $\pmb{x_i}$ is a set of features associated with object $i$ 
+  - In some situations we may have observed rankings as well
+  - Our goal is to determine which features are important for modeling the rankings, or determine an ideal global ranking.
+  
+## Ranking Methods
+
+### **Probability Models:**
+  - Order statistics 
+    - e.g. Bradley-Terry, Plackett-Luce, Rank ordered logit, Multinomial logit, Probit  
+  
+  - Distance based 
+    - e.g. Mallows  
+  
+### **Algorithmic Models:**
+  - "Learning to Rank"
+    - e.g. OC SVM, Ranking SVM, RankBoost, RankNet, ListNet, AdaRank, SVM MAP  
+
+## Ranking Methods {.smaller}
+### Evaluation
+| Actual Ranking | Predicted Ranking 1 | Predicted Ranking 2 |
+|----------------|---------------------|---------------------|
+|  1             | 1                   | 2                   |
+|  2             | 2                   | 1                   |
+|  3             | 4                   | 3                   |
+|  4             | 3                   | 4                   |
+
+### Common loss functions / evaluation measures:  
+  - MAP  
+  - Kendall's $\tau$  
+  - Discounted Cumalitive Gain (DCG) & Normalized DCG  
+  
+# Review | Support Vector Machines
+
+## Support Vector Classifier
+### Notation
+  - $y_i = -1$ or $1$
+  - $x_{i1}, \dots, x_{ip}$ are features for observation $i$,  $\,i=1,\dots,n$
+
+### A hyperplane:
+  - $\{ x: f(x)=x^T\beta+\beta_0=0 \}$, where $\sum \beta_j^2 = 1$
+  
+### The classification rule:
+  - $G(x) = sign [x^T\beta+\beta_0 ]$
+
+
+## Support Vector Classifier
+
+We want to find the hyperplane that has the largest margin between training points of different classes.  
+
+That is, $$ \underset{\beta_0, \beta, \|\beta\|=1}{max} M $$
+subject to 
+$$ y_i(x_i^T\beta+\beta_0)\geq M, \, i=1,\dots,n $$
+
+## Support Vector Classifier
+
+### Separating hyperplane with largest margin
+<img src="svm1.png" height="400px" width="500px" />
+
+## Support Vector Classifier
+
+  - Finding a separating hyperplane is not always possible, so we allow some points to be on the wrong side of the hyperplane.
+  - Now the optimization problem can be written as
+  $$ \underset{\| \beta \|}{min}\, \text{ subject to } \,y_i(x_i^T\beta+\beta_0)\geq 1-\epsilon_i $$ for all $i$ and $$ \sum \epsilon_i \leq \text{constant}, \text{ and } \epsilon_i \geq 0 $$
+  - $\epsilon_i$ are slack variables
+
+## The Support Vector Machine
+  - The feature space can be expanding by taking inner products of the feature, etc.
+  - SVM extends the support vector classifier by enlarging the feature space through the use of kernels
+      - Most common kernels are polynomials and radial basis functions
+  - Polynomial kernel: $K(x_i, x_{i'})= \left( 1 + \sum_{j=1}^{p}x_{ij}x_{i'j} \right)^d$
+  - Radial kernel: $K(x_i, x_{i'})= exp\{ -\gamma \sum_{j=1}^{p}(x_{ij}-x_{i'j})^2 \}$
+  
+## The Support Vector Machine
+
+### Comparison to regularization
+ - The optimization can again be reformulated as:
+ $$ \underset{\beta_0,\beta}{min} \sum_{i=1}^{n}[1-y_if(x_i)]_{+} + 
+ \frac{\lambda}{2} \|\beta \|^2 $$
+ - Loss + Penalty
+ - Hinge loss function
+ - $\lambda = 1/C$
+
+# A simulated example
+
+## Simulated Example
+### Simulated Rankings and Features
+$$
+\begin{pmatrix} y_1 \\  y_2 \\ y_3 \\ y_4 \\ y_5  \end{pmatrix} = \begin{pmatrix} 1 \\  2 \\ 3 \\ 4 \\ 5  \end{pmatrix} \; \text{and}
+\quad \pmb{X} = 
+  \begin{pmatrix}
+    \pmb{x_1}^T \\
+    \pmb{x_2}^T \\
+    \pmb{x_3}^T \\
+    \pmb{x_4}^T \\
+    \pmb{x_5}^T \\
+  \end{pmatrix}=
+  \begin{pmatrix} 
+    x_{11} & x_{12}  \\ 
+    x_{21} & x_{22}  \\ 
+    x_{31} & x_{32}  \\ 
+    x_{41} & x_{42}  \\ 
+    x_{51} & x_{52}  \\ 
+  \end{pmatrix}
+$$
+
+## Simulated Example
+### Rankings over the feature space
+```{r echo=FALSE}
+# Generate data
+  options(warn=-1)
+  set.seed(327)
+  y <- 1:5
+  x <- matrix(runif(10), 5, 2)
+  x[,1] <- x[,1] + 1:5*.5
+  x[,2] <- x[,2] - ((1:5)^2)*.1 + rnorm(5) +3.5
+  dat <- data.frame(y=y, x=x)
+  colnames(dat) <- c('y','x1','x2')
+
+# Plot features
+  library(ggplot2)
+  names <- c('y1','y2','y3','y4','y5')
+  ggplot(dat, aes(x1,x2)) + geom_point(color='blue',aes(size=20)) + 
+    geom_text(aes(label=names,hjust=1.2,vjust=1.2)) + xlab(expression(paste(x[1]))) + 
+    ylab(expression(paste(x[2]))) + 
+    scale_x_continuous(limits=c(min(x[,1]),max(x[,1]))) +
+    scale_y_continuous(limits=c(min(x[,2]-.2),max(x[,2])))  +
+    theme(text = element_text(size=20)) +
+    theme(legend.position="none")
+
+```
+
+## Simulated Example
+### Transformation to Pairwise Classification
+```{r, echo=FALSE}
+# Create data frame of pairwise differences
+  pairs.df <- data.frame(matrix(0,5*4,ncol(dat)))
+  colnames(pairs.df)  <- colnames(dat)
+  pair.ctr <- 1
+  label.names  <- rep('1',5*4)
+  for (i in 1:5) {
+    for (j in (1:5)[-i]) {
+      pairs.df[pair.ctr,] <- dat[i,] - dat[j,]
+      label.names[pair.ctr] <- paste('y',i,'-y',j,sep='')
+      pair.ctr <- pair.ctr + 1
+    }
+  }
+  pairs.df$class <- factor(ifelse(pairs.df$y<0,1,-1))
+  pairs.df <- subset(pairs.df, select=-y)
+  pairs.df <- data.frame(pairs.df, labs=label.names)
+
+# Plot pairwise differences
+  ggplot(pairs.df, aes(x1,x2,color=class)) + geom_point(aes(size=20))  +
+    geom_text(aes(label=labs,hjust=1.1,vjust=1.1)) + xlab(expression(paste(x[1]))) + 
+    ylab(expression(paste(x[2]))) + 
+    scale_x_continuous(limits=c(min(pairs.df$x1-.4),max(pairs.df$x1))) +
+    scale_y_continuous(limits=c(min(pairs.df$x2-.2),max(pairs.df$x2))) +
+    theme(legend.position="none") + theme(text = element_text(size=20))
+```
+
+## Simulated Example
+### Train a SVM classifier
+```{r echo=F} 
+library(e1071)
+df <- subset(pairs.df, select=-labs)
+```
+```{r} 
+## Specify 'cost' parameter and fit SVM
+svmfit   <- svm(class~x1+x2, data=df, kernel='linear', cost=10)
+
+## Or use cross-validation to tune for the 'cost' parameter
+tune.out <- tune(svm,class~x1+x2, data=df, kernel='linear', 
+                 ranges=list(cost=10^(-4:4)))
+best.mod <- tune.out$best.model
+```
+
+## Simulated Example
+```{r} 
+plot(best.mod, df)
+```
+
+## Simulated Example
+  - Generate testing data:  
+  $y_1^*,y_2^*,y_3^*,y_4^*,y_5^*$ and $\pmb{x^*_1}^T,\pmb{x^*_2}^T,\pmb{x^*_3}^T,\pmb{x^*_4}^T  ,\pmb{x^*_5}^T$  
+  
+  - Use fitted SVM model to get _decision values_ for each observation in the 
+ testing data  
+ 
+    - i.e., $d_i = \widehat \beta_0 + \widehat \beta_1 x_{i1} + \widehat \beta_2 x_{i2}$  
+    
+  - Rank testing observations according to the decision values
+ 
+## Simulated Example
+### Testing data  
+
+```{r echo=FALSE}
+# Generate test data
+  set.seed(328)
+  y <- 1:5
+  x <- matrix(runif(10), 5, 2)
+  x[,1] <- x[,1] + 1:5*.5
+  x[,2] <- x[,2] - ((1:5)^2)*.1 + rnorm(5) +3.5
+  test.dat <- data.frame(y=y, x=x)
+  colnames(test.dat) <- c('y','x1','x2')
+
+# Plot test data
+  gg <- ggplot(test.dat, aes(x1,x2)) + geom_point(color='blue',aes(size=20)) + 
+    xlab(expression(paste(x[1]))) + 
+    ylab(expression(paste(x[2]))) + 
+    scale_x_continuous(limits=c(min(x[,1]),max(x[,1]))) +
+    scale_y_continuous(limits=c(min(x[,2]-.2),max(x[,2])))  +
+    theme(text = element_text(size=20)) +
+    theme(legend.position="none")
+  gg
+```
+
+## Simulated Example
+### Testing data  
+
+```{r echo=FALSE}
+# Plot test data labels  
+  gg+ geom_text(aes(label=names,hjust=1.2,vjust=1.2))
+```
+
+## Simulated Example {.smaller}
+```{r echo=FALSE}
+# Get predicted rankings
+  test.pred <- predict(best.mod, test.dat, decision.values = T)
+  test.pred <- attr(test.pred, 'decision.values')
+  test.dat$pred <- order(test.pred, decreasing=T)
+```
+### Ranking Testing data
+
+| Actual | Predicted            |
+|--------|----------------------|
+|  1     | `r test.dat$pred[1]` |
+|  2     | `r test.dat$pred[2]` |
+|  3     | `r test.dat$pred[3]` |
+|  4     | `r test.dat$pred[4]` |
+|  5     | `r test.dat$pred[5]` |
+
+**Kendall's $\tau$ = `r cor(test.dat$y,test.dat$pred, method = 'kendall')`**
+
+# An application | Ranking 2014 NCAA Football Teams
+
+## Ranking NCAA Football Teams
+### The ranking problem  
+
+  - How to rank the top 25 teams?  
+  
+  - Hard problem
+    - 128 teams in the FBS
+    - Each team only plays 10-14 games in a season
+    - Only a few games (if any) against other highly ranked teams
+    - Lots of variables
+
+## Ranking NCAA Football Teams
+### The data 
+  - Collected from sports-reference.com
+  - Use the AP Top 25 Poll as the "ideal" ranking to model
+  - Training rankings = 2013 AP Poll as of Week 12 
+  - Testing rankings = 2014 AP Poll as of Week 12 (this week)
+  - Features: 
+    - Offense & Defense stats: Points scored (Avg), Passing %, Rushing Yds (Avg), Total Yds (Avg), Turnover (Avg), Penalty Yds (Avg) 
+    - Conference, 
+    - Win % 
+    - Wins & losses against other ranked teams
+
+## Ranking NCAA Football Teams {.smaller}
+```{r echo=FALSE}
+### Load data
+# Stats have been scaled and centered (except for conference dummy variables)
+# Data collected from sports-reference.com
+  load('NCAA_stats_2013-14')
+
+### Regression to rank
+  # Train on 2013
+    lm.fit <- lm((Rank)~0+., data=cfb13)
+  # Predict for 2014
+    lm.pred <- predict(lm.fit, newdata=cfb14)  
+    lm.pred <- data.frame(School=names(sort(lm.pred)), pRank=1:25)
+    lm.pred$School  <- as.character(lm.pred$School)
+    lm.out <- merge(data.frame(School=rownames(cfb14), Rank=cfb14$Rank), lm.pred, by='School')
+    lm.predicted <- lm.out[order(lm.out$pRank),]$School 
+
+### SVM to rank
+  # Train on 2013
+    pairs.df <- data.frame(matrix(0,25*24,ncol(cfb13)))
+    colnames(pairs.df)  <- colnames(cfb13)
+    pair.ctr <- 1
+    for (i in 1:25) {
+      for (j in (1:25)[-i]) {
+        pairs.df[pair.ctr,] <- cfb13[i,] - cfb13[j,]
+        pair.ctr <- pair.ctr + 1
+      }
+    }
+    pairs.df$y <- factor(ifelse(pairs.df$Rank<0,1,-1))
+    pairs.df <- subset(pairs.df, select=-Rank)
+    library(e1071)
+  # Tuning - Linear kernel w/ cost=100 is best  
+    # tune.out <- tune(svm,y~., data=pairs.df, kernel='radial',
+    #                 ranges=list(cost=10^((-4):4), gamma=10^((-4):4)))     
+    # tune.out <- tune(svm,y~., data=pairs.df, kernel='linear',
+    #                ranges=list(cost=10^(-4:4)))
+    bestmod <- svm(y~., data=pairs.df, kernel='linear', cost=100)
+  # Predict for 2014
+    pred.svm <- predict(bestmod, cfb14, decision.values = T)
+    pred.values <- attr(pred.svm, 'decision.values')
+    pred.ranks <- data.frame(School=rownames(pred.values)[order(pred.values, decreasing=T)], 
+                         pRank=1:25)
+    pred.ranks$School <- as.character(pred.ranks$School)
+    svm.out <- merge(data.frame(School=rownames(cfb14), Rank=cfb14$Rank), 
+                     pred.ranks, by='School')
+    svm.actual <- svm.out[order(svm.out$Rank),]$School
+    svm.predicted <- svm.out[order(svm.out$pRank),]$School
+
+  # Get Kendall's Tau correlation for both models
+    svm.cor <- cor(svm.out$Rank, svm.out$pRank, method='kendall')
+    lm.cor <- cor(lm.out$Rank, lm.out$pRank, method='kendall')
+```
+### Ranking SVM
+| Rank | Actual                | Predicted            | | Rank | Actual                | Predicted            |
+|------|-----------------------|----------------------|-|------|-----------------------|----------------------|
+|  1.  | `r svm.actual[1]`     | `r svm.predicted[1]` | |  9.  | `r svm.actual[9]`     | `r svm.predicted[9]` |
+|  2.  | `r svm.actual[2]`     | `r svm.predicted[2]` | |  10.  | `r svm.actual[10]`     | `r svm.predicted[10]` |
+|  3.  | `r svm.actual[3]`     | `r svm.predicted[3]` | |  11.  | `r svm.actual[11]`     | `r svm.predicted[11]` |
+|  4.  | `r svm.actual[4]`     | `r svm.predicted[4]` | |  12.  | `r svm.actual[12]`     | `r svm.predicted[12]` |
+|  5.  | `r svm.actual[5]`     | `r svm.predicted[5]` | |  13.  | `r svm.actual[13]`     | `r svm.predicted[13]` |
+|  6.  | `r svm.actual[6]`     | `r svm.predicted[6]` | |  14.  | `r svm.actual[14]`     | `r svm.predicted[14]` |
+|  7.  | `r svm.actual[7]`     | `r svm.predicted[7]` | |  15.  | `r svm.actual[15]`     | `r svm.predicted[15]` |
+|  8.  | `r svm.actual[8]`     | `r svm.predicted[8]` | |  16.  | `r svm.actual[16]`     | `r svm.predicted[16]` |
+
+## Ranking NCAA Football Teams {.smaller}
+### Ranking with Regression
+| Rank | Actual                | Predicted            | | Rank | Actual                | Predicted            |
+|------|-----------------------|----------------------|-|------|-----------------------|----------------------|
+|  1.  | `r svm.actual[1]`     | `r lm.predicted[1]` | |  9.  | `r svm.actual[9]`     | `r lm.predicted[9]` |
+|  2.  | `r svm.actual[2]`     | `r lm.predicted[2]` | |  10.  | `r svm.actual[10]`     | `r lm.predicted[10]` |
+|  3.  | `r svm.actual[3]`     | `r lm.predicted[3]` | |  11.  | `r svm.actual[11]`     | `r lm.predicted[11]` |
+|  4.  | `r svm.actual[4]`     | `r lm.predicted[4]` | |  12.  | `r svm.actual[12]`     | `r lm.predicted[12]` |
+|  5.  | `r svm.actual[5]`     | `r lm.predicted[5]` | |  13.  | `r svm.actual[13]`     | `r lm.predicted[13]` |
+|  6.  | `r svm.actual[6]`     | `r lm.predicted[6]` | |  14.  | `r svm.actual[14]`     | `r lm.predicted[14]` |
+|  7.  | `r svm.actual[7]`     | `r lm.predicted[7]` | |  15.  | `r svm.actual[15]`     | `r lm.predicted[15]` |
+|  8.  | `r svm.actual[8]`     | `r lm.predicted[8]` | |  16.  | `r svm.actual[16]`     | `r lm.predicted[16]` |
+
+## Ranking NCAA Football Teams 
+
+### How do they compare?
+
+| Method      | Kendall's $\tau$     |
+|-------------|----------------------|
+|  SVM        | `r round(svm.cor,3)` |
+|  Regression | `r round(lm.cor, 3)` |
+
+### What went wrong? 
+
+ - Neither method used the group structure of the data
+ - Ranking SVM was one of the first methods for "learning to rank". Many more advanced methods exist now. 
+
+# Thank you!
