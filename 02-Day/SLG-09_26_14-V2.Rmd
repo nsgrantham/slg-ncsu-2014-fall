@@ -1,0 +1,639 @@
+---
+title: "Comparison of Regularization Penalties"
+author: "Josh Day"
+date: "September 26, 2014"
+output:
+  ioslides_presentation:
+    keep_md: yes
+    transition: faster
+subtitle: NCSU Statistical Learning Group (SLG)
+---
+
+
+$\DeclareMathOperator*{\argmin}{arg\,min}$
+$\newcommand{\bs}[1]{\boldsymbol{#1}}$
+
+
+
+
+# Review | Linear Model, OLS, and Regularization
+
+
+
+
+## Notation
+
+$\bs{y}=\bs{X\beta}+\bs{\epsilon}$
+
+where
+
+$\bs{y}_{n\times 1} = \begin{pmatrix} y_1 \\ \vdots \\ y_n \end{pmatrix}, \quad$
+$\bs{X}_{n\times p} = \begin{bmatrix} \bs{x_1}^T \\ \vdots \\ \bs{x_n}^T \end{bmatrix}$ = 
+$\begin{bmatrix}  x_{11} & x_{12} & \ldots & x_{1p} \\ \vdots & & \ddots \\
+ x_{n1} & x_{n2} & \ldots & x_{np}\end{bmatrix}$,
+
+$\bs{\beta}_{p\times 1}=\begin{pmatrix} \beta_1 \\ \vdots \\ \beta_p\end{pmatrix}, \quad$ and $\quad \bs{\epsilon}_{n\times 1} \sim \left[\bs{0}, \sigma^2 \bs{I}_n\right]$
+
+
+
+
+## OLS
+We want to minimize the L2 loss function (squared error loss):
+$$
+\begin{aligned}
+  RSS(\bs{\beta}) &= (\bs{y}-\bs{X\beta})^T(\bs{y}-\bs{X\beta}) \\ &= \sum_{i=1}^n (y_i-\bs{x_i}^T\bs{\beta})^2
+\end{aligned}
+$$
+Solution:
+$$
+\begin{aligned}
+  \hat{\bs{\beta}}_{OLS} &= \argmin_{\bs{\beta}} RSS(\bs{\beta}) \\ &= \bs{(X^TX)^{-1}X^Ty}
+\end{aligned}
+$$
+
+
+
+
+## Regularization
+$$
+\begin{aligned}
+  \hat{\bs\beta}(\lambda) &= \argmin_{\bs\beta} \left[ RSS(\bs{\beta}) + \lambda J(\bs{\beta}) \right] \\
+  &= \argmin_{\bs{\beta}} RSS(\bs{\beta}) \text{ (subject to } J(\bs{\beta}) \le t)
+\end{aligned} 
+$$
+
+- $\lambda \ge 0$ or $t \ge 0$ is the tuning parameter   
+- Standardize variables first!  
+- $\beta_0$ is typically left out of the penalty
+    + After standardization, set $\hat{\beta}_0=\bar{y}$ and solve for remaining coefficients without intercept
+
+
+
+
+## Assessing Prediction Accuracy
+
+Given a new input, $\pmb{x}_0$, we assess our prediction $\hat{f}(\pmb{x}_0)$ by:
+
+- Expected Prediction Error (EPE)
+    - $$ \begin{aligned} 
+    EPE(\pmb{x}_0) &= E[(y_0 - \hat{f}(\pmb{x}_0))^2] \\
+    &= \text{Var}(\epsilon) + \text{Var}(\hat{f}(\pmb{x}_0)) + \text{Bias}(\hat{f}(\pmb{x}_0))^2 \\
+    &= \text{Var}(\epsilon) + MSE(\hat{f}(\pmb{x}_0))
+    \end{aligned} $$
+    - $\text{Var}(\epsilon)$: irreducible error variance
+    - $\text{Var}(\hat{f}(\pmb{x}_0))$: sample-to-sample variability of $\hat{f}(\pmb{x}_0)$ 
+    - $\text{Bias}(\hat{f}(\pmb{x}_0))$: average difference of $\hat{f}(\pmb{x}_0)$ & $f(\pmb{x}_0)$ 
+  
+  
+  
+ 
+## Bias/Variance Trade-off
+<p align="center">
+  <img src="figures/biasVar.png" height="450" width="600">
+  <br>
+  Source: Hastie, Tibshirani, & Friedman (2009)
+</p>
+
+
+
+
+## Estimating Prediction Error
+- Randomly split data into **training** and **test** sets
+    - Test set has $m$ observations
+1. Estimate $\hat{f}(\bs{x}) = \bs{x^T\hat{\beta}}$ using **training** data
+2. Estimate MSE using **test** data
+\[ \widehat{MSE}(\hat{f}) = \frac{1}{m} \sum_{i=1}^{m} (y_i - \hat{f}(x_i))^2  \]
+
+
+
+
+# Common Penalties $J(\cdot)$
+
+
+
+
+## Penalties
+- **Ridge**:
+$\quad J_R(\bs{\beta}) = \left|\left|\bs{\beta}\right|\right|_2^2 = \bs{\beta}^T\bs{\beta} = \sum_{j=1}^p \beta_j^2$
+
+```{r, echo=FALSE, fig.height=3, fig.width=3, message=FALSE}
+data(mtcars)
+library(glmnet)
+# alpha=1 is LASSO
+# alpha=0 is ridge
+y <- as.vector(mtcars[, 1])
+x <- as.matrix(mtcars[, -1])
+
+fit.ridge <- glmnet(x, y, alpha=0, family="gaussian")
+fit.lasso <- glmnet(x, y, alpha=1, family="gaussian")
+fit.elnet <- glmnet(x,y, alpha=.5, family="gaussian")
+```
+
+- **LASSO**:
+$\quad J_L(\bs{\beta}) = \left|\left|\bs{\beta}\right|\right|_1 = \sum_{j=1}^p \left| \beta_j \right|$
+```{r, fig.align='center', echo=FALSE, fig.height=4, fig.width=7}
+par(mfrow=c(1,2))
+plot(fit.ridge, xvar="lambda", main="Ridge")
+plot(fit.lasso, xvar="lambda", main="LASSO", xlim=c(-6, 2))
+```
+
+
+
+## Ridge vs. Lasso
+<p align="center">
+  <img src="figures/ridge_lasso.png" height="450" width="600">
+  <br>
+  Source: Hastie, Tibshirani, & Friedman (2009)
+</p>
+
+
+
+
+## Penalties
+- $\bs L_q$: $\quad J(\bs{\beta}) = \sum_{j=1}^p \left|\beta_j\right|^q$
+
+<p align="center">
+  <img src="figures/lq.png" height="170" width="600">
+  <br>
+  Source: Hastie, Tibshirani, & Friedman (2009)
+</p>
+
+
+
+
+## Penalties 
+- Elastic Net (Zou and Hastie, 2005):
+$$
+J_{EN}(\bs{\beta}) = \alpha J_{L}(\bs{\beta}) + (1-\alpha)J_{R}(\bs{\beta}) = \sum_{i=1}^p \left\{\alpha\left|\beta_j\right| + (1-\alpha)\beta_j^2\right\}
+$$
+
+```{r, echo=FALSE, fig.height=4, fig.width=4, fig.align='center'}
+plot(fit.elnet, xvar="lambda", label=TRUE, main="Elastic Net")
+```
+
+
+
+## Penalty Overview
+- Ridge: L2 penalty
+- LASSO: L1 penalty
+- Elastic Net:  Weighted average of L1 and L2 penalties
+
+
+
+
+## Ridge
+Minimize 
+$$RSS(\bs{\beta}, \lambda)=(\bs{y-X\beta})^T(\bs{y-X\beta}) + \lambda\bs{\beta^T\beta}$$
+
+Solution: 
+$$\hat{\bs\beta}_{RIDGE} = (\bs{X^TX}+\lambda\bs{I})^{-1}\bs{X}^T\bs{y}$$
+
+
+
+
+## Ridge
+**Pros:**
+
+- $(\bs{X^TX}+\lambda\bs{I})$ is nonsingular
+- Can be used on $p > n$ problems
+- Attenuates strange coefficients due to multicollinearity
+- Closed form estimate of variance
+    + $Var(\bs{\hat{\beta}}) = \sigma^2 \bs{WX^TXW}$ where $\bs{W}=(\bs{X^TX}-\lambda\bs{I})^{-1}$
+- There always exists $\lambda$ such that $MSE(\bs{\hat{\beta}_{Ridge}}) < MSE(\bs{\hat{\beta}_{OLS}})$
+- Empirically does great at prediction
+
+
+
+## Ridge
+**Cons:**
+
+- No variable selection (nothing set to zero)
+- Low interpretability
+- It doesn’t do as well when all of the true coefficients are moderately large
+
+
+
+
+## LASSO
+Minimize 
+$$RSS(\bs{\beta})=(\bs{y-X\beta})^T(\bs{y-X\beta})$$ 
+subject to 
+$$\sum_{i=1}^p \left| \beta_i \right| \le t$$
+
+Solution:
+
+- No closed form solution as with Ridge Regression
+- Efficient fitting algorithms exist that do not increase computational complexity compared to ridge.
+
+
+
+
+## LASSO
+**Pros:**
+
+- Does variable selection
+    + Easier to interpret than Ridge
+- Can be used on $p > n$ problems
+- Performs well when true model is sparse (most coefficients are zero)
+    
+
+
+
+## LASSO
+**Cons:**
+
+- For $p>n$, LASSO can select at most only $n$ predictors before model is saturated
+- For a correlated group of predictors, LASSO often selects only one and sets the rest to zero
+
+
+## Elastic Net
+Minimize 
+$$RSS(\bs{\beta})=(\bs{y-X\beta})^T(\bs{y-X\beta})$$ 
+subject to 
+$$\sum_{i=1}^p \left\{(1-\alpha)\beta_i^2 + \alpha\left| \beta_i \right|\right\}\le t$$  
+
+Solution:
+
+- No closed form
+- Does not increase computational complexity
+
+## Elastic Net
+**Pros:**
+
+- Performs well where LASSO does well
+- Alleviates issues where LASSO performs poorly
+    + Can select groups of correlated variables
+    + When $p > n$, can select more than $n$ predictors
+- Does shrinkage and variable selection
+
+
+
+
+## Elastic Net
+**Cons:**
+
+- Empirically only does well when "close" to Ridge or LASSO
+
+
+
+
+# Examples
+
+
+
+
+## Example 1 
+True model: $\bs{y}=\bs{X\beta} + \bs{\epsilon}$
+
+where:
+
+- $\bs{\beta}=(\underbrace{1,...,1}_{15}, \underbrace{0,...,0}_{4085})^T$
+- $p=5000 > n=1000$
+- Uncorrelated predictors: 
+    + $\bs{X}_i \overset{\text{iid}}{\sim} N(\bs{0}, \bs I)$
+- $\bs{\epsilon} \overset{\text{iid}}{\sim} N(\bs{0},\bs I)$
+
+## Example 1 
+Solution Path | Training data MSE (10-fold CV)
+```{r, echo=FALSE, fig.height=5, fig.width=6, fig.align='center', cache=TRUE}
+library(MASS)  # Package needed to generate correlated precictors
+library(glmnet)  # Package to fit ridge/lasso/elastic net models
+
+#####################################################
+### Scenario 1: Sparsity, uncorrelated predictors
+#####################################################
+
+# Generate data
+set.seed(19875)
+n <- 1000    # Number of observations
+p <- 5000     # Number of predictors included in model
+real_p <- 15  # Number of true predictors
+x <- matrix(rnorm(n*p), nrow=n, ncol=p)
+y <- apply(x[,1:real_p], 1, sum) + rnorm(n)
+
+# Split data into train and test sets
+train_rows <- sample(1:n, .66*n)
+x.train <- x[train_rows, ]
+x.test <- x[-train_rows, ]
+
+y.train <- y[train_rows]
+y.test <- y[-train_rows]
+
+
+
+# Fit models:
+fit.lasso <- glmnet(x.train, y.train, family="gaussian", alpha=1)
+fit.ridge <- glmnet(x.train, y.train, family="gaussian", alpha=0)
+fit.elnet <- glmnet(x.train, y.train, family="gaussian", alpha=.5)
+
+
+# 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
+fit.lasso.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=1, 
+                          family="gaussian")
+fit.ridge.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=0,
+                          family="gaussian")
+fit.elnet.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=.5,
+                          family="gaussian")
+
+for (i in 0:10) {
+    assign(paste("fit", i, sep=""), cv.glmnet(x.train, y.train, type.measure="mse", 
+                                              alpha=i/10,family="gaussian"))
+}
+
+
+
+# Plot solution paths:
+par(mfrow=c(3,2))
+# For plotting options, type '?plot.glmnet' in R console
+plot(fit.lasso, xvar="lambda")
+plot(fit10, main="LASSO")
+
+plot(fit.ridge, xvar="lambda")
+plot(fit0, main="Ridge")
+
+plot(fit.elnet, xvar="lambda")
+plot(fit5, main="Elastic Net")
+
+if (FALSE) { # Don't include yet
+  par(mfrow=c(3,4))
+  for (i in 0:10) {
+    plot(glmnet(x.train, y.train, family="gaussian", alpha=i/10, nlambda=50))
+  }
+}
+
+```
+
+## Example 1 - MSE on test set
+```{r, echo=FALSE, cache=TRUE}
+yhat0 <- predict(fit0, s=fit0$lambda.1se, newx=x.test)
+yhat1 <- predict(fit1, s=fit1$lambda.1se, newx=x.test)
+yhat2 <- predict(fit2, s=fit2$lambda.1se, newx=x.test)
+yhat3 <- predict(fit3, s=fit3$lambda.1se, newx=x.test)
+yhat4 <- predict(fit4, s=fit4$lambda.1se, newx=x.test)
+yhat5 <- predict(fit5, s=fit5$lambda.1se, newx=x.test)
+yhat6 <- predict(fit6, s=fit6$lambda.1se, newx=x.test)
+yhat7 <- predict(fit7, s=fit7$lambda.1se, newx=x.test)
+yhat8 <- predict(fit8, s=fit8$lambda.1se, newx=x.test)
+yhat9 <- predict(fit9, s=fit9$lambda.1se, newx=x.test)
+yhat10 <- predict(fit10, s=fit10$lambda.1se, newx=x.test)
+
+mse0 <- mean((y.test - yhat0)^2)
+mse1 <- mean((y.test - yhat1)^2)
+mse2 <- mean((y.test - yhat2)^2)
+mse3 <- mean((y.test - yhat3)^2)
+mse4 <- mean((y.test - yhat4)^2)
+mse5 <- mean((y.test - yhat5)^2)
+mse6 <- mean((y.test - yhat6)^2)
+mse7 <- mean((y.test - yhat7)^2)
+mse8 <- mean((y.test - yhat8)^2)
+mse9 <- mean((y.test - yhat9)^2)
+mse10 <- mean((y.test - yhat10)^2)
+
+```
+
+$\alpha$             | MSE
+-------------------- | --------------------
+$\alpha=0$ (Ridge)   | `r mse0`
+$\alpha=0.2$         | `r mse2`
+$\alpha=0.4$         | `r mse4`
+$\alpha=0.6$         | `r mse6`
+$\alpha=0.8$         | `r mse8`
+$\alpha=1$ (LASSO)   | `r mse10`
+
+
+
+
+## Example 2
+True model: $\bs{y}=\bs{X\beta} + \bs{\epsilon}$
+
+where:
+
+- $\bs{\beta}=(\underbrace{1,...,1}_{1500}, \underbrace{0,...,0}_{3500})^T$
+- $p=5000 > n=1000$
+- Uncorrelated predictors: 
+    + $\bs{X}_i \overset{\text{iid}}{\sim} N(\bs{0}, \bs I)$
+- $\bs{\epsilon} \overset{\text{iid}}{\sim} N(\bs{0},\bs I)$
+
+## Example 2
+Solution Path | Training data MSE (10-fold CV)
+```{r, echo=FALSE, fig.height=5, fig.width=6, fig.align='center', cache=TRUE}
+library(MASS)  # Package needed to generate correlated precictors
+library(glmnet)  # Package to fit ridge/lasso/elastic net models
+
+# Generate data
+set.seed(19874)
+n <- 1000    # Number of observations
+p <- 5000     # Number of predictors included in model
+real_p <- 1500  # Number of true predictors
+x <- matrix(rnorm(n*p), nrow=n, ncol=p)
+y <- apply(x[,1:real_p], 1, sum) + rnorm(n)
+
+# Split data into train and test sets
+train_rows <- sample(1:n, .66*n)
+x.train <- x[train_rows, ]
+x.test <- x[-train_rows, ]
+
+y.train <- y[train_rows]
+y.test <- y[-train_rows]
+
+
+
+# Fit models:
+fit.lasso <- glmnet(x.train, y.train, family="gaussian", alpha=1)
+fit.ridge <- glmnet(x.train, y.train, family="gaussian", alpha=0)
+fit.elnet <- glmnet(x.train, y.train, family="gaussian", alpha=.5)
+
+
+# 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
+fit.lasso.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=1, 
+                          family="gaussian")
+fit.ridge.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=0,
+                          family="gaussian")
+fit.elnet.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=.5,
+                          family="gaussian")
+
+for (i in 0:10) {
+    assign(paste("fit", i, sep=""), cv.glmnet(x.train, y.train, type.measure="mse", 
+                                              alpha=i/10,family="gaussian"))
+}
+
+
+
+# Plot solution paths:
+par(mfrow=c(3,2))
+# For plotting options, type '?plot.glmnet' in R console
+plot(fit.lasso, xvar="lambda")
+plot(fit10, main="LASSO")
+
+plot(fit.ridge, xvar="lambda")
+plot(fit0, main="Ridge")
+
+plot(fit.elnet, xvar="lambda")
+plot(fit5, main="Elastic Net")
+```
+
+
+## Example 2 - MSE on test set
+```{r, echo=FALSE, cache=TRUE}
+yhat0 <- predict(fit0, s=fit0$lambda.1se, newx=x.test)
+yhat1 <- predict(fit1, s=fit1$lambda.1se, newx=x.test)
+yhat2 <- predict(fit2, s=fit2$lambda.1se, newx=x.test)
+yhat3 <- predict(fit3, s=fit3$lambda.1se, newx=x.test)
+yhat4 <- predict(fit4, s=fit4$lambda.1se, newx=x.test)
+yhat5 <- predict(fit5, s=fit5$lambda.1se, newx=x.test)
+yhat6 <- predict(fit6, s=fit6$lambda.1se, newx=x.test)
+yhat7 <- predict(fit7, s=fit7$lambda.1se, newx=x.test)
+yhat8 <- predict(fit8, s=fit8$lambda.1se, newx=x.test)
+yhat9 <- predict(fit9, s=fit9$lambda.1se, newx=x.test)
+yhat10 <- predict(fit10, s=fit10$lambda.1se, newx=x.test)
+
+mse0 <- mean((y.test - yhat0)^2)
+mse1 <- mean((y.test - yhat1)^2)
+mse2 <- mean((y.test - yhat2)^2)
+mse3 <- mean((y.test - yhat3)^2)
+mse4 <- mean((y.test - yhat4)^2)
+mse5 <- mean((y.test - yhat5)^2)
+mse6 <- mean((y.test - yhat6)^2)
+mse7 <- mean((y.test - yhat7)^2)
+mse8 <- mean((y.test - yhat8)^2)
+mse9 <- mean((y.test - yhat9)^2)
+mse10 <- mean((y.test - yhat10)^2)
+
+```
+
+$\alpha$             | MSE
+-------------------- | --------------------
+$\alpha=0$ (Ridge)   | `r mse0`
+$\alpha=0.2$         | `r mse2`
+$\alpha=0.4$         | `r mse4`
+$\alpha=0.6$         | `r mse6`
+$\alpha=0.8$         | `r mse8`
+$\alpha=1$ (LASSO)   | `r mse10`
+
+
+
+
+## Example 3
+True model: $y =\bs{X\beta} + \epsilon$ 
+
+where 
+
+- $\bs{\beta}=(10,10,5,5,\underbrace{1,...,1}_{10},\underbrace{0,...,0}_{36})^T$
+- $p=50$
+- $n=100$
+- Correlated predictors: $Cov(\bs{X})_{ij} = (0.7)^{|i-j|}$
+
+## Example 3
+Solution Path | Training data MSE (10-fold CV)
+```{r, echo=FALSE, fig.height=5, fig.width=6, fig.align='center', cache=TRUE}
+library(MASS)  # Package needed to generate correlated precictors
+library(glmnet)  # Package to fit ridge/lasso/elastic net models
+
+
+# Generate data
+set.seed(19873)
+n <- 100    # Number of observations
+p <- 50     # Number of predictors included in model
+CovMatrix <- outer(1:p, 1:p, function(x,y) {.7^abs(x-y)})
+x <- mvrnorm(n, rep(0,p), CovMatrix)
+y <- 10 * apply(x[, 1:2], 1, sum) + 
+  5 * apply(x[, 3:4], 1, sum) +
+  apply(x[, 5:14], 1, sum) +
+  rnorm(n)
+
+# Split data into train and test sets
+train_rows <- sample(1:n, .66*n)
+x.train <- x[train_rows, ]
+x.test <- x[-train_rows, ]
+
+y.train <- y[train_rows]
+y.test <- y[-train_rows]
+
+
+
+# Fit models:
+fit.lasso <- glmnet(x.train, y.train, family="gaussian", alpha=1)
+fit.ridge <- glmnet(x.train, y.train, family="gaussian", alpha=0)
+fit.elnet <- glmnet(x.train, y.train, family="gaussian", alpha=.5)
+
+
+# 10-fold Cross validation for each alpha = 0, 0.1, ... , 0.9, 1.0
+fit.lasso.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=1, 
+                          family="gaussian")
+fit.ridge.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=0,
+                          family="gaussian")
+fit.elnet.cv <- cv.glmnet(x.train, y.train, type.measure="mse", alpha=.5,
+                          family="gaussian")
+
+for (i in 0:10) {
+    assign(paste("fit", i, sep=""), cv.glmnet(x.train, y.train, type.measure="mse", 
+                                              alpha=i/10,family="gaussian"))
+}
+
+
+
+# Plot solution paths:
+par(mfrow=c(3,2))
+# For plotting options, type '?plot.glmnet' in R console
+plot(fit.lasso, xvar="lambda")
+plot(fit10, main="LASSO")
+
+plot(fit.ridge, xvar="lambda")
+plot(fit0, main="Ridge")
+
+plot(fit.elnet, xvar="lambda")
+plot(fit5, main="Elastic Net")
+```
+
+
+## Example 3 - MSE on test set
+```{r, echo=FALSE, cache=TRUE}
+yhat0 <- predict(fit0, s=fit0$lambda.1se, newx=x.test)
+yhat1 <- predict(fit1, s=fit1$lambda.1se, newx=x.test)
+yhat2 <- predict(fit2, s=fit2$lambda.1se, newx=x.test)
+yhat3 <- predict(fit3, s=fit3$lambda.1se, newx=x.test)
+yhat4 <- predict(fit4, s=fit4$lambda.1se, newx=x.test)
+yhat5 <- predict(fit5, s=fit5$lambda.1se, newx=x.test)
+yhat6 <- predict(fit6, s=fit6$lambda.1se, newx=x.test)
+yhat7 <- predict(fit7, s=fit7$lambda.1se, newx=x.test)
+yhat8 <- predict(fit8, s=fit8$lambda.1se, newx=x.test)
+yhat9 <- predict(fit9, s=fit9$lambda.1se, newx=x.test)
+yhat10 <- predict(fit10, s=fit10$lambda.1se, newx=x.test)
+
+mse0 <- mean((y.test - yhat0)^2)
+mse1 <- mean((y.test - yhat1)^2)
+mse2 <- mean((y.test - yhat2)^2)
+mse3 <- mean((y.test - yhat3)^2)
+mse4 <- mean((y.test - yhat4)^2)
+mse5 <- mean((y.test - yhat5)^2)
+mse6 <- mean((y.test - yhat6)^2)
+mse7 <- mean((y.test - yhat7)^2)
+mse8 <- mean((y.test - yhat8)^2)
+mse9 <- mean((y.test - yhat9)^2)
+mse10 <- mean((y.test - yhat10)^2)
+
+```
+
+$\alpha$             | MSE
+-------------------- | --------------------
+$\alpha=0$ (Ridge)   | `r mse0`
+$\alpha=0.2$         | `r mse2`
+$\alpha=0.4$         | `r mse4`
+$\alpha=0.6$         | `r mse6`
+$\alpha=0.8$         | `r mse8`
+$\alpha=1$ (LASSO)   | `r mse10`
+
+
+
+
+
+## Summary
+- We can do $p>n$ problems!
+- No penalty is universally superior
+- Ridge and LASSO fit into the Elastic Net framework
+    + Need cross validation to choose $\lambda$ and $\alpha$
+
+- Several versions of LASSO exist
+    + Grouped LASSO, Adaptive LASSO
+    + To be discussed next week?
+
