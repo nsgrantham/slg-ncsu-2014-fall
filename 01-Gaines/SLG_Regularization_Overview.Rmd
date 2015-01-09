@@ -1,0 +1,586 @@
+---
+title: "An Overview of Regularized Regression"
+author: "Brian R. Gaines"
+date: "September 19, 2014"
+output: 
+  ioslides_presentation: default
+bibliography: slg.bib
+subtitle: NCSU Statistical Learning Group (SLG)
+---
+<!-- I could not get R Markdown's citations to work as the works cited at the
+  end would not continue onto multiple slides.  If you know how to fix that, 
+  please let me know. -->
+$\DeclareMathOperator*{\argmin}{arg\,min}$
+
+
+## Statistical Learning Group (SLG) ##
+
+First of three statistical learning topics
+
+- Today: Big picture talk
+    - Level of technicality will vary
+- Sep. 26: Joshua Day - Comparison of Regularization Penalties 
+- Oct. 3: ?? - ??  
+
+Please provide feedback  
+
+- How can the SLG be improved?  
+- How can I be a more effective presenter?
+
+## Outline ##
+
+1. Review & Notation  
+2. Motivation
+3. Regularized Regression
+4. Implementation
+
+
+# Review & Notation ##
+
+## Supervised Learning ##
+
+Recall from Justin's talk:
+
+- Both inputs (features or predictors) & an output (response) are observed
+- Want to build a learner (model) to understand the relationship between the 
+  two 
+    - Often interested in prediction
+
+## Notation ##
+
+- ${y}_i$: output or response variable
+    - $i = 1,...,n$
+- $x_{ij}$: input, predictor, or feature variable
+    - $j = 1,...,p$
+
+Matrix notation  
+
+$\pmb{y} = \begin{pmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{pmatrix} \quad$ and 
+$\quad \pmb{X} = 
+  \begin{pmatrix} 
+    x_{11} & x_{12} & \cdots & x_{1p} \\ 
+    x_{21} & x_{22} & \cdots & x_{2p} \\ 
+    \vdots & \vdots & \cdots & \vdots \\ 
+    x_{n1} & x_{n2} & \cdots & x_{np} 
+  \end{pmatrix}$
+
+## Predictor Standardization ##
+ 
+For regularized regression, predictors should be standardized before estimation
+
+- Done using the classic "z-score" formula
+- Puts each predictor on the same scale
+    - Mean of 0 and variance of 1
+    - Importance will be more clear later
+    
+- Use $\hat{\beta_0} = \bar{y}$ and estimate other coefficients 
+    - Can transform back to original scale after estimation
+
+## Estimation Goals ##
+
+Given $\pmb{X}$, find a function, $f(\pmb{X})$, to model or predict $Y$
+ 
+- Loss function, $L(y, f(\pmb{X}))$
+    - Determines adequacy of fit
+    - Squared error loss is most common  
+
+\[L(y, f(\pmb{X})) = (y - f(\pmb{X}))^2 \]
+
+- Choose $f$ by minimizing the expected loss
+\[  E[(Y - f(\pmb{X}))^2] \]
+    - $\Rightarrow f = E[Y | \pmb{X} = \pmb{x}]$ 
+
+## Linear Regression ##
+
+Assume $E[Y | \pmb{X} = \pmb{x}]$ is a linear function, 
+  $\displaystyle \sum_{j=1}^{p} x_{ij} \beta_j = \pmb{x}_i'\pmb{\beta}$
+
+- $Y_i = \beta_0 + x_{i1}\beta_1 + x_{i2}\beta_2 + \dots + x_{ip}\beta_p 
+         + \epsilon$
+
+- Estimate $\pmb{\beta}$ using ordinary least squares (OLS)
+\[\hat{\pmb{\beta}} = 
+  \argmin_{\pmb{\beta}} \sum_{i=1}^n (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 \\
+  = \argmin_{\pmb{\beta}} \| \pmb{y} - \pmb{X}\pmb{\beta} \|^2_2\]
+\[\Rightarrow \hat{\pmb{\beta}}^{OLS} = (\pmb{X}'\pmb{X})^{-1} \pmb{X}'\pmb{y} 
+  \Rightarrow \hat{f}(\pmb{x}_i) = \pmb{x}_i'\hat{\pmb{\beta}}\]
+
+
+# Motivation | Why is regularization needed? #
+
+## Linear Regression Shortcomings ##
+
+Despite its wide use and elegant theory, linear regession has its shortcomings
+
+- Prediction accuracy
+    - Often can be improved upon
+
+- Model interpretability
+    - Linear model does not automatically do variable selection
+
+## Assessing Prediction Accuracy ##
+
+Given a new input, $\pmb{x}_0$, how do we assess our prediction 
+$\hat{f}(\pmb{x}_0)$?
+
+- Expected Prediction Error (EPE)
+    - $$ \begin{aligned} 
+    EPE(\pmb{x}_0) &= E[(Y_0 - \hat{f}(\pmb{x}_0))^2] \\
+                   &= \text{Var}(\epsilon) + \text{Var}(\hat{f}(\pmb{x}_0))
+                      + \text{Bias}(\hat{f}(\pmb{x}_0))^2 \\
+                   &= \text{Var}(\epsilon) + MSE(\hat{f}(\pmb{x}_0))
+    \end{aligned} $$
+    - $\text{Var}(\epsilon)$: irreducible error variance
+    - $\text{Var}(\hat{f}(\pmb{x}_0))$: sample-to-sample variability of 
+                                        $\hat{f}(\pmb{x}_0)$ 
+    - $\text{Bias}(\hat{f}(\pmb{x}_0))$: average difference of 
+                                         $\hat{f}(\pmb{x}_0)$ & $f(\pmb{x}_0)$
+    
+## Estimating Prediction Error ##
+
+Common approach to estmating prediction error
+
+- Randomly split data into "training" and "test" sets
+    - Test set has $m$ observations
+- Calculate $\hat{f}$ using training data
+- Estimate prediction error using test set MSE
+\[ \widehat{MSE}(\hat{f}) = 
+  \frac{1}{m} \sum_{i=1}^{m} (y_i - \hat{f}(x_i))^2  \]
+
+Why?
+
+- Want our model/predictions to perform well with new/future data
+
+## Bias-Variance Tradeoff ##
+<!-- Can't figure out how to center & resize with markdown, 
+  "-><-" didn't work -->
+
+<p align="center">
+  <img src="images/biasVar.png" height="450" width="600">
+</p>
+Source: Hastie, Tibshirani, & Friedman (2009)
+
+## Improving Prediction Accuracy ##
+
+If $f(x) \approx \text{linear}$, $\hat{f}$ will have low bias but possibly
+  high variance
+
+- Correlated predictors 
+- $p \approx n$ or high-dimensional setting where $p > n$
+\
+
+Want to minimize \[MSE(\hat{f}(x)) = \text{Var}(\hat{f}(x)) + 
+\text{Bias}(\hat{f}(x))^2\]
+
+- Sacrifice bias to reduce variance
+    - Hopefully leads to decrease in $MSE$
+- Regularization allows us to tune this trade-off
+
+## Variable Selection ##
+
+Often interested in using only a subset of the predictors
+
+- Want to identify the most relevant predictors
+    - Usually the big picture is of interest
+- Helps avoid an overly complex model that is difficult to interpret 
+
+Linear regression does not directly determine which predictors to use
+
+How do we choose which predictors to use?
+
+- Theory or expertise
+- Ad hoc trial and error using p-values
+
+
+## Automatic Subset Selection Methods ##
+- Best subset
+- Forward or backward stepwise
+- Forward stagewise
+    - Pick the best subset using test set prediction $MSE$, $C_p$, AIC, or BIC
+ 
+Still not ideal
+
+- Discrete process: predictor is either included or excluded
+    - Unstable & highly variable
+- Regularization is more continuous, & less variable as a result
+  
+
+# Regularized Regression | What is regularization? #
+
+## Regularization Framework ##
+
+Same setup as before
+
+- Given $\pmb{X}$, find a function, $f(\pmb{X})$, to model or predict $y$
+- Assume linear model and use squared error loss
+
+Add second term to minimization
+
+\[\hat{\pmb{\beta}}(\lambda) = \argmin_{\beta} 
+  \left\{\sum_{i=1}^n (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 
+  + \lambda J(\pmb{\beta})\right\}\]
+
+- $\lambda \ge 0$ is a regularization (tuning or penalty) parameter
+- $J(\pmb{\beta})$ is a user-defined penalty function
+    - Typically, the intercept is not penalized
+ 
+## Role of the Penalty Term ##
+
+Consider $\displaystyle J(\pmb{\beta}) = \sum_{j=1}^p \beta_j^2 = 
+  \| \pmb{\beta} \|^2_2 \hspace{0.2cm}$ (Ridge Regression)
+
+Equivalent formulations
+\[\hat{\pmb{\beta}}(\lambda)^{RR} = \argmin_{\pmb{\beta}} 
+  \left\{\sum_{i=1}^n (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + 
+  \lambda \sum_{j=1}^p \beta_j^2 \right\}\]
+
+\[\hat{\pmb{\beta}}(t)^{RR} = \argmin_{\pmb{\beta}} 
+  \sum_{i=1}^n (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 \\ 
+  \text{subject to} \sum_{j=1}^p \beta_j^2 \le t\] 
+
+## Role of the Regularization Parameter ##
+
+$\lambda$ directly controls the bias-variance trade-off:
+
+- $\lambda = 0$ corresponds to OLS
+- $\lambda \rightarrow \infty$ puts more weight on the penalty function and 
+  results in more shrinkage of the coefficients 
+    - Introduce bias at the sake of reducing variance
+
+Each $\lambda$ results in a different solution $\hat{\pmb{\beta}}(\lambda)$  
+
+- Choosing $\lambda$ correctly is crucial (discussed later)
+
+## The Lasso ##
+
+Tibshirani (1996): Uses $\displaystyle J(\pmb{\beta}) = \sum_{j=1}^p |\beta_j| = 
+  \| \pmb{\beta} \|_1$
+
+\[\hat{\pmb{\beta}}(\lambda)^{L} = \argmin_{\beta} 
+  \left\{\sum_{i=1}^n (y_i - \sum_{j=1}^{p} x_{ij} \beta_j)^2 + 
+  \lambda \sum_{j=1}^p |\beta_j| \right\}\]
+
+The subtle change in the penalty makes a big difference
+
+- Not only shrinks coefficients towards zero, but sets some of them to be 
+  exactly zero
+    - Thus performs continuous variable selection
+    - Hence the name, Least Absolute Shrinkage and Selection Operator
+([LASSO](http://statweb.stanford.edu/~tibs/lasso.html "Tibshirani's Lasso Page"))
+
+## Geometric Interpretation ##
+<!-- Can't figure out how to center & resize with markdown, "-><-",
+  didn't work -->
+  
+<p align="center">
+  <img src="images/lasso_ridge.png" height="450" width="600">
+</p>
+Source: Hastie, Tibshirani, & Friedman (2009)
+
+## General Regularization Framework ##
+
+\[\min_{f \in \mathcal{H}} \sum_{i=1}^n \left\{L(y_i, f(x_i)) + 
+  \lambda J(f)\right\} \]
+
+- $\mathcal{H}$ is a space of possible functions
+
+Very general and flexible framework
+
+- $L$: squared error, absolute error, zero-one, negative log-likelihood (GLM),
+  hinge loss (support vector machines), ...
+- $J$: ridge regression, lasso, adaptive lasso, group lasso, fused lasso, 
+  thesholded lasso, generalized lasso, constrained lasso, elastic-net, 
+  dantzig selector, SCAD, smoothing splines, ...
+    - Allows us to incorporate prior knowledge (sparsity, structure, etc.)
+
+
+# Implementation | How is regularization actually used? #
+
+## Example: NCAA Dataset ##
+
+- From Mangold, Bean, & Adams (2003) via 
+  [Dr. Dennis Boos](http://www4.stat.ncsu.edu/~boos/var.select/ "Link to NCAA Dataset") 
+- Contains information on 94 major NCAA division I universities
+    - $y$: average 6-year graduation rate for 1996-1998
+    - $bbindex$: author-created basketball index
+    - $attend$: average basketball attendance
+    - 17 other predictors suggested by the literature
+        - Acceptance rate, student-to-faculty ratio, etc.
+
+Goal: Use OLS, ridge regression, and the lasso to find the best predictive
+   model
+
+Implementation: `glmnet` package in R
+
+- Code available on 
+[SLG website](http://www4.stat.ncsu.edu/~post/reading/index "Link to R Code")
+
+
+```{r setup, echo=FALSE, include=FALSE}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
+### NCSU Statistical Learning Group - Regularized Regression Overview ###
+###                NCAA Data Example - Brian R. Gaines                ###
+###       Data from Mangold, Bean, Adams (2003) via Dennis Boos       ###
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
+
+#### Initial Stuff ####
+# clean up
+rm(list=ls())
+# load required packages
+library(glmnet)
+library(arm)
+library(knitr) # needed for the kable function
+# pick random seed
+seed = 2014
+
+
+
+#### Organize Data ####
+# load dataset
+ncaaData <- 
+  read.table("http://www4.stat.ncsu.edu/~boos/var.select/ncaa.data2.txt",
+             header=TRUE, quote="\"")
+
+# define response and predictors
+y = ncaaData$y
+# X = scale(ncaaData[,-20])  # not needed, glmnet auto standardizes predictors
+X = as.matrix(ncaaData[,-20])  # X needs to be a matrix, not a data frame
+
+# randomly split data into training (2/3) and test (1/3) sets
+set.seed(seed)
+train = sample(1 : nrow(X), round((1/2) * nrow(X)))
+test = -train
+
+# subset training data
+yTrain = y[train]
+XTrain = X[train, ]
+XTrainOLS = cbind(rep(1,nrow(XTrain)), XTrain)
+  
+# subset test data
+yTest = y[test]
+XTest = X[test, ]
+
+
+
+#### Model Estimation & Selection ####
+# estimate models
+fitOLS = lm(yTrain ~ XTrain)  # Ordinary Least Squares
+# glmnet automatically standardizes the predictors
+fitRidge = glmnet(XTrain, yTrain, alpha = 0)  # Ridge Regression
+fitLasso = glmnet(XTrain, yTrain, alpha = 1)  # The Lasso
+
+#### End ####
+```
+
+## Computational Considerations
+
+Regularized regression estimates are a function of $\lambda$
+
+Fortunately efficient algorithms exist
+
+- Solution path algorithms
+    - LARS Algorithm for the Lasso (Efron et al., 2004)
+    - Piecewise linearity (Rosset & Zhu, 2007)
+    - Generaic path algorithm (Zhou & Wu, 2013)
+    
+- Others
+    - Pathwise coordinate descent (Friedman et al., 2007)
+    - Alternating Direction Method of Multipliers (ADMM) (Boyd et al. 2011)
+    
+## Lasso Solution Path
+```{r lassopath, echo=FALSE,fig.align='center',fig.height=5.8, fig.width=8.5}
+### Plot Solution Path ###
+# Lasso
+plot(fitLasso,xvar="lambda", label="TRUE")
+# add label to upper x-axis
+mtext("# of Nonzero (Active) Coefficients", side=3, line=2.5)
+```
+
+## Ridge Regression Solution Path
+```{r ridgepath, echo=FALSE,fig.align='center',fig.height=5.8, fig.width=8.5}
+### Plot Solution Path ###
+# Ridge
+plot(fitRidge,xvar="lambda", label="TRUE")
+# add label to upper x-axis
+mtext("# of Nonzero (Active) Coefficients", side=3, line=2.5)
+```
+
+
+## Choice of Regularization Parameter
+Efficiently obtaining the entire solution path is nice, but we still have to 
+  choose $\lambda$
+
+- Critical since $\lambda$ constrols the bias-variance tradeoff
+
+Traditional model selection methods
+
+- $C_p$, AIC, BIC, adjusted $R^2$
+
+Cross validation is a popular alternative
+
+- Choice based on predictive performance
+- Makes fewer model assumptions
+- More widely applicable
+  
+
+## Cross Validation Motivation
+Ideally:
+<p align="center">
+  <img src="images/trainValTest.png"  height="100" width="800">
+</p>
+- Separate validation set for choosing $\lambda$ for a given method
+    - Reusing training set encourages overfitting
+    - Using test set to pick $\lambda$ underestimates the true error
+
+- Often we do not have enough data for a seperate validation set
+    - Cross validation remedies this problem
+
+## $K$-Fold Cross Validation
+
+1. Randomly split training data into $K$ parts ("folds")
+<p align="center">
+  <img src="images/cvFolds.png"  height="150" width="700">
+</p>
+2. Fit model using data in $K-1$ folds for multiple $\lambda\text{s}$
+3. Calculate prediction MSE on remaining fold
+4. Repeat process for each fold and average the MSEs
+
+- Common choices of $K$: 5, 10, and $n$ (leave-one-out CV)
+- One standard error rule
+    - Choose $\lambda$ corresponding to smallest model with MSE within
+      one standard error of the minimum MSE
+
+## Lasso 10-Fold Cross Validation
+```{r lassocv, echo=FALSE,fig.align='center',fig.height=5.8, fig.width=8.5}
+#### 10-fold cross validation ####
+# Lasso
+set.seed(seed)  # set seed 
+# (10-fold) cross validation for the Lasso
+cvLasso = cv.glmnet(XTrain, yTrain, alpha = 1)
+plot(cvLasso)
+mtext("# of Nonzero (Active) Coefficients", side=3, line=2.5)
+```
+
+```{r ridgecv, echo=FALSE,fig.align='center',fig.show='hide'}
+#### 10-fold cross validation ####
+# Ridge Regression
+set.seed(seed)  # set seed 
+# (10-fold) cross validation for Ridge Regression
+cvRidge = cv.glmnet(XTrain, yTrain, alpha = 0)
+plot(cvRidge)
+```
+
+## Final Models ##
+```{r testerror, echo=FALSE}
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
+### Determine final models ###
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
+
+#### Extract Coefficients ####
+# OLS coefficient estimates
+betaHatOLS = fitOLS$coefficients
+# Lasso coefficient estimates 
+betaHatLasso = as.double(coef(fitLasso, s = cvLasso$lambda.1se))  # s is lambda
+# Ridge  coefficient estimates 
+betaHatRidge = as.double(coef(fitRidge, s = cvRidge$lambda.1se))
+
+
+
+#### Test Set MSE ####
+# calculate predicted values
+
+# For some reason, the predict function was not working correctly for OLS
+# One suggestion was to include the test response (yTrain) in the test set...
+# data.frame with the same name as the original response, but this didn't work
+# predOLS =  predict(fitOLS, 
+#                      newdata = as.data.frame(cbind(XTest, yTrain = yTest)))
+
+XTestOLS = cbind(rep(1, nrow(XTest)), XTest) # add intercept to test data
+predOLS = XTestOLS%*%betaHatOLS 
+predLasso = predict(fitLasso, s = cvLasso$lambda.1se, newx = XTest)
+predRidge = predict(fitRidge, s = cvRidge$lambda.1se, newx = XTest)
+
+# calculate test set MSE
+testMSEOLS = mean((predOLS - yTest)^2)
+testMSELasso = mean((predLasso - yTest)^2)
+testMSERidge = mean((predRidge - yTest)^2)
+#### End ####
+```
+
+```{r regplot, echo=FALSE,fig.align='center',fig.height=5.3, fig.width=8.5}
+#### Plot Regression Coefficients ####
+# create variable names for plotting 
+varNames = c("top10", "act25", "oncampus", "ft_grad", "size", "tateach",
+             "bbindex", "tuition", "board", "attend", "full_sal", "sf_ratio",
+             "white", "ast_sal", "pop", "phd", "accept", "l_pct", "outstate",
+             "intercept")
+
+# Graph regression coefficients
+coefplot(betaHatOLS[2:20], sd = rep(0,19), cex.pts = 1.5, 
+         main = "Regression Coefficient Estimates", varnames = varNames)
+coefplot(betaHatLasso[2:20], sd = rep(0,19), add = TRUE, col.pts = "red",
+         cex.pts = 1.5)
+coefplot(betaHatRidge[2:20], sd = rep(0,19), add = TRUE, col.pts = "blue",
+         cex.pts = 1.5)
+legend(2.7,18.5, c("OLS", "Lasso", "Ridge"), col = c("black", "red", "blue"), 
+       pch = c(19, 19 ,19), bty = "n")
+#### End ####
+```
+
+## Model Performance ##
+```{r msetab, echo=FALSE, results='asis'}
+#### Test Set MSE Table ####
+# create table as data frame
+MSETable = data.frame(OLS=testMSEOLS, Lasso=testMSELasso, Ridge=testMSERidge)
+
+# convert to markdown
+kable(MSETable, format="pandoc", caption="Test Set MSE", 
+      align=c("c", "c", "c"))
+
+#### End ####
+```
+
+## Summary ##
+
+Traditional linear model is useful but has its shortcomings
+
+- Prediction accuracy
+- Model interpretability 
+
+
+Regularization adds a penalty term to the estimation
+
+- Able to exploit the bias-variance trade-off
+- Certain penalties allow for continuous variable selection
+- Very flexible, able to incorporate prior knowledge
+
+## References ##
+
+Boyd, S., Parikh, N., Chu, E., Peleato, B., & Eckstein, J. (2011). Distributed
+  optimization and statistical learning via the alternating direction method of
+  multipliers. *Foundations and Trends in Machine Learning*, 3(1), 1-122.
+  
+Hastie, T., Friedman, J., & Tibshirani, R. (2009). 
+  *The Elements of Statistical Learning*. New York: Springer.
+  
+Efron, B., Hastie, T., Johnstone, I., & Tibshirani, R. (2004). Least angle 
+  regression. *The Annals of Statistics*, 32(2), 407-499.
+
+Friedman, J., Hastie, T., Höfling, H., & Tibshirani, R. (2007). Pathwise 
+  coordinate optimization. *The Annals of Applied Statistics*, 1(2), 302-332.
+  
+## References ##
+Mangold, W. D., Bean, L., & Adams, D. (2003). The impact of intercollegiate 
+  athletics on graduation rates among major NCAA division I universities: 
+  Implications for college persistence theory and practice. 
+  *The Journal of Higher Education*, 74(5), 540-562.
+  
+Rosset, S., & Zhu, J. (2007). Piecewise linear regularized solution paths. 
+  *The Annals of Statistics*, 35(3), 1012-1030.
+  
+Tibshirani, R. (1996). Regression shrinkage and selection via the lasso. 
+  *Journal of the Royal Statistical Society, Series B*, 58(1), 267-288.
+  
+Zhou, H., & Wu, Y. (2013) A generic path algorithm for regularized statistical
+  estimation. *Journal of American Statistical Association*, 109(506): 686-699.
