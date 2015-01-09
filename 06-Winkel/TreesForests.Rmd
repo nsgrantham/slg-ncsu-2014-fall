@@ -1,0 +1,266 @@
+---
+title: "Trees and Forests"
+author: "Munir Winkel"
+output: pdf_document
+---
+
+
+```{r}
+###   Using Trees and Random Forests in R
+###   A Brief Tutorial
+###   by Munir Winkel
+###     10 / 31 / 2014
+
+
+rm( list=( ls() ) )
+
+### If packages are not installed, install them with this code:
+
+
+  if (!is.element("tree", installed.packages()[, 1])) {
+    install.packages("tree", repos = "http://cran.us.r-project.org")
+        }
+  library(tree)
+ 
+  if (!is.element("randomForest", installed.packages()[, 1])) {
+    install.packages("randomForest")
+        }
+ library(randomForest)
+         
+if (!is.element("rgl", installed.packages()[, 1])) {
+    install.packages("rgl")
+        }
+ library(rgl)
+### The above code is based off of code by Dr. Hua Zhou
+ 
+
+
+
+#### A Quick Example with Regression Trees
+
+x <- rnorm(500,5,0.5)
+z <- rexp(500)
+
+
+### Seeing some variability in regression trees
+### The ideal decision tree would say:
+  #   if ( x > 5 or z < 2 ) then  a = 5
+  #   otherwise a = 1
+
+a <- ifelse(
+   ( x > 5) | 
+   ( z < 2) 
+   , rnorm(500,5,.25) , rnorm(500,1,.75)  
+    )
+
+
+plot3d(a,z,x,size=6,col="blue")
+
+## 
+## A function that creates training sets
+### build = training set
+### pure = test set
+
+teachit <- function(x,percent=55){
+      
+    train <-sample(1:nrow(x), floor(dim(x)[1]  *percent/100))
+    
+    ### Pure has never been seen before
+    pure <<- x[-train,]
+    
+    ### Build is what we'll use to build our model
+    build <<- x[train,]
+}
+
+
+
+
+### Creating a Data Frame 
+frame <- data.frame(matrix(cbind(x,z,a),ncol=3))
+colnames(frame) <- c("x","z","output")
+par(mfrow=c(2,2))
+
+### A simple loop to show that the trees change, depending on the data
+
+
+for (i in 1:4){
+
+  ### sampling data at __% 
+teachit(frame,percent=16)
+
+test <- tree ( output ~ x + z , data=build)
+plot(test)
+text(test)
+}
+
+```
+
+
+```{r}
+rm( list=( ls() ) )
+
+## Writing that "Build Training Set" function again
+teachit <- function(x,percent=55){
+      
+    train <-sample(1:nrow(x), floor(dim(x)[1]  *percent/100))
+    
+    ### Pure has never been seen before
+    pure <<- x[-train,]
+    
+    ### Build is what we'll use to build our model
+    build <<- x[train,]
+}
+
+
+### Beginning with birth name data from New York State 
+### Department of Health
+
+setwd("~/Statistics Presentations")
+x <- read.csv("longname.csv",header=TRUE)
+# x <- read.csv("harder.csv",header=TRUE)
+
+### Getting a look at the data
+### When
+table(x[,1])
+
+### What names?
+table(x[,2])
+
+### What gender?
+table(x[,2],x[,3])
+
+### What do the data look like?
+x[110:130,]
+dim(x)
+
+
+#### LEARNING MOMENT
+#### WHY IS THIS BAD ? 
+
+badtree <- tree(sex ~ firstname + year , data=x)
+summary(badtree)
+
+plot(badtree)
+
+text(badtree,pretty=0,cex=0.5)
+
+
+
+
+teachit(x,percent=35)
+
+
+## What does it look like? 
+head(build)
+dim(build)
+table(build[,2],build[,3])
+
+
+### Fitting a Tree to the Training Set
+
+
+stree <- tree(sex ~ firstname , data = build)
+summary(stree)
+stree
+
+
+plot(stree)
+text(stree,pretty=5,cex=0.5)
+
+### Predicting using this tree
+
+predtree <- predict(stree,pure,type="class")
+
+
+### How well did we do? Note: uses "pure" data
+tab <- table(predtree,pure$sex); tab
+
+### Success 
+tab1 <- round(sum(diag(tab))/sum(tab),4)
+tab1
+
+### Pruning the tree
+pruned <- prune.misclass(stree , best=2)
+pruned
+
+plot(pruned)
+print(pruned)
+text(pruned, pretty=5 , cex=0.5)
+
+
+### How well did we do? Note: uses "pure" data
+predprune <- predict(pruned , pure, type="class")
+ptab <- table(predprune, pure$sex); ptab
+
+### Success 
+ptab1 <- round(sum(diag(ptab))/sum(ptab),4)
+ptab1
+
+
+
+
+#### Random Forest Approach
+
+forest <- randomForest(sex ~ year + firstname, 
+                    data=build, 
+                    ntree=75,
+                   importance = TRUE)
+
+
+pforest <- predict( forest , newdata=pure )
+
+## Looking at Results
+ftab <- table( pforest  ,  pure$sex )
+ftab
+
+ftab1 <- round( sum( diag( ftab ))/sum( ftab ) , 4 )
+ftab1
+summary(forest)
+print(forest)
+
+
+### What About Logistic Regression? 
+
+logist <- glm(sex ~ firstname + year, 
+               family = binomial( logit ), 
+               data = build)
+
+### Predicted Coefficients
+coefficients(logist)
+
+
+### What is it modeleing? Probability of "Male"
+log2 <- (glm(sex ~ NULL, 
+               family=binomial( logit ), 
+               data=build))
+coefficients(log2)
+
+log(sum(build$sex == "M")/sum(build$sex == "F"))
+
+
+### Creating Predictor Variables
+lpred <- predict(logist, newdata=pure, type= "response" )
+
+### Setting a Cut-Off value at 50%
+lpred50 <- ifelse(lpred >= .50 , "M", "F")
+
+ltab <- table( lpred50 , pure$sex ) ; ltab
+
+ltab1 <- round( sum( diag( ltab ) )/ sum( ltab ) , 4 ) ; ltab1
+
+
+
+
+
+### Comparing All Five
+
+data.frame("Unpruned",tab1,"Pruned",ptab1  ,
+           "Forest",ftab1 , "Logistic", ltab1)
+
+#Unpruned
+list(tab,ptab,ftab,ltab)
+
+## Cleanup
+rm(list=(ls()))
+```
+
