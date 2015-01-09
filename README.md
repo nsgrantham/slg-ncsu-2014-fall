@@ -36,5 +36,5 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 |06|10/31/14|Decision Trees|Munir Winkel|
 |07|11/07/14|Support Vector Machines|Jami Jackson|
 |08|11/14/14|Ranking via SVNs|Brian Naughton|
-|09|11/21/14|Discriminant Analysis|Huimen Peng|
+|09|11/21/14|Discriminant Analysis|Huimin Peng|
 | | |_Done for the semester_||
