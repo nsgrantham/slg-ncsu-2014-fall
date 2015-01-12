@@ -1,7 +1,7 @@
 Statistical Learning Group, Fall 2014
 ========
 
-SLG is a reading group at North Carolina State University organized by [Dr. Justin Post](http://www4.stat.ncsu.edu/~post/) and PhD Statistics students Jami Jackson, Brian Gaines, [Neal Grantham](http://nsgrantham.github.io), and [Josh Day](http://joshday.github.io).
+SLG is a reading group at North Carolina State University organized by [Dr. Justin Post](http://www4.stat.ncsu.edu/~post/) and PhD Statistics students Jami Jackson, [Brian Gaines](http://brgaines.github.io), [Neal Grantham](http://nsgrantham.github.io), and [Josh Day](http://joshday.github.io).
 
 ## Goals of the group
 
@@ -20,13 +20,13 @@ SLG is a reading group at North Carolina State University organized by [Dr. Just
 	
 ## Introduction
 
-Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/index) and see `Overview.pdf`, Justin's slides on an introduction to statistical learning slides (Sadly, Justin's talk is not available online because the video camera battery died halfway through, but we've learned our lesson!).
+Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/index) and see `Overview.pdf` in `00-Post`, Justin's slides on an introduction to statistical learning slides (Sadly, Justin's talk is not available online because the video camera battery died halfway through, but we've learned our lesson!).
 
 ## Schedule of talks
 
 |Talk|Date|Topic|Presenter(s)|
 |----|----|-----|------------|
-| |09/05/14|Introduction|Neal Grantham & Justin Post|
+|00|09/05/14|Introduction|Neal Grantham & Justin Post|
 |01|09/19/14|Regularization & Penalization|Brian Gaines|
 |02|09/26/14|Penalization Methods|Joshua Day|
 |03|10/03/14|Adaptive & Generalized Lasso|Will Burton|
@@ -35,6 +35,6 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 |05|10/24/14|Bayesian Classification|Suchit Mehrotra|
 |06|10/31/14|Decision Trees|Munir Winkel|
 |07|11/07/14|Support Vector Machines|Jami Jackson|
-|08|11/14/14|Ranking via SVNs|Brian Naughton|
+|08|11/14/14|Ranking via SVMs|Brian Naughton|
 |09|11/21/14|Discriminant Analysis|Huimin Peng|
 | | |_Done for the semester_||
