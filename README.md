@@ -20,7 +20,7 @@ SLG is a reading group at North Carolina State University organized by [Dr. Just
 	
 ## Introduction
 
-Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/index) and see `Overview.pdf` in `00-Post`, Justin's slides on an introduction to statistical learning slides (Sadly, Justin's talk is not available online because the video camera battery died halfway through, but we've learned our lesson!).
+Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/index) and see `Overview.pdf` in `00-Post`, Justin's slides on an introduction to statistical learning (Sadly, Justin's talk is not available online because the video camera battery died halfway through, but we've learned our lesson!).
 
 ## Schedule of talks
 
@@ -29,7 +29,7 @@ Watch Neal's introduction to SLG [here](http://www4.stat.ncsu.edu/~post/reading/
 |00|09/05/14|Introduction|Neal Grantham & Justin Post|
 |01|09/19/14|Regularization & Penalization|Brian Gaines|
 |02|09/26/14|Penalization Methods|Joshua Day|
-|03|10/03/14|Adaptive & Generalized Lasso|Will Burton|
+|03|10/03/14|Grouped & Adaptive LASSO|Will Burton|
 | |10/10/14|_Fall Break_
 |04|10/17/14|Classification|Neal Grantham|
 |05|10/24/14|Bayesian Classification|Suchit Mehrotra|
